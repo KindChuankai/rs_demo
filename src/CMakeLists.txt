@@ -1,1 +1,2 @@
-add_subdirectory(multicam)
+ADD_SUBDIRECTORY(async_multi_cam)
+ADD_SUBDIRECTORY(consumers)

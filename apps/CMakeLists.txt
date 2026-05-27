@@ -1,0 +1,1 @@
+ADD_SUBDIRECTORY(multicam_async_app)
