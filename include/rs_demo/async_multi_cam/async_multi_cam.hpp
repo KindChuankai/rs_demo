@@ -4,8 +4,10 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <cstdint>
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -13,13 +15,13 @@ struct CameraFrame
 {
     std::string serial;
     rs2::frameset frames;
-    unsigned long long frame_number = 0;
+    std::uint64_t frame_number = 0;
     double timestamp_ms = 0.0;
 };
 
 struct MultiCamFrameBundle
 {
-    std::size_t sequence_id = 0;
+    std::uint64_t sequence_id = 0;
     std::vector<CameraFrame> cameras;
 };
 
@@ -38,7 +40,7 @@ public:
     std::shared_ptr<const MultiCamFrameBundle> getLatest() const;
 
     std::shared_ptr<const MultiCamFrameBundle> waitForNewer(
-        std::size_t last_sequence_id,
+        std::uint64_t last_sequence_id,
         int timeout_ms = 100
     );
 
@@ -58,5 +60,5 @@ private:
     std::condition_variable bundle_cv_;
 
     std::shared_ptr<const MultiCamFrameBundle> latest_bundle_;
-    std::size_t sequence_counter_ = 0;
+    std::uint64_t sequence_id_ = 0;
 };

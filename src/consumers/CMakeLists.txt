@@ -15,6 +15,7 @@ ADD_LIBRARY(consumers
 
 TARGET_LINK_LIBRARIES(consumers
     PUBLIC
+        async_multi_cam
         ${OpenCV_LIBS}
 )
 

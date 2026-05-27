@@ -19,7 +19,7 @@ void policyConsumer(
     AsyncMultiCamProducer& producer,
     std::atomic<bool>& running)
 {
-    std::size_t last_seq = 0;
+    std::uint64_t last_seq = 0;
 
     while (running)
     {
@@ -63,7 +63,7 @@ void visualizationConsumer(
     AsyncMultiCamProducer& producer,
     std::atomic<bool>& running)
 {
-    std::size_t last_seq = 0;
+    std::uint64_t last_seq = 0;
 
     while (running)
     {
