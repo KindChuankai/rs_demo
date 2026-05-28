@@ -35,6 +35,14 @@ int main()
             std::ref(running)
         );
 
+        std::thread recorder_thread(
+            irVideoRecorderConsumer,
+            std::ref(producer),
+            std::ref(running),
+            std::string("realsense_ir"),
+            30.0
+        );
+
         while (running)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -47,6 +55,9 @@ int main()
 
         if (vis_thread.joinable())
             vis_thread.join();
+
+        if (recorder_thread.joinable())
+            recorder_thread.join();
     }
     catch (const rs2::error& e)
     {

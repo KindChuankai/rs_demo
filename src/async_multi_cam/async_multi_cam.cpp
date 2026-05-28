@@ -79,7 +79,6 @@ void AsyncMultiCamProducer::stop()
         return;
 
     running_ = false;
-    bundle_cv_.notify_all();
 
     for (auto& cam : cameras_)
     {
@@ -98,6 +97,7 @@ void AsyncMultiCamProducer::stop()
         }
     }
 
+    bundle_cv_.notify_all();
 }
 
 std::shared_ptr<const MultiCamFrameBundle>

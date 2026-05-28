@@ -1,6 +1,7 @@
 #include "rs_demo/consumers/consumers.hpp"
 
 #include <iostream>
+#include <vector>
 
 cv::Mat irFrameToMatClone(const rs2::video_frame& ir_frame)
 {
@@ -112,5 +113,86 @@ void visualizationConsumer(
             running = false;
             break;
         }
+    }
+}
+
+void irVideoRecorderConsumer(
+    AsyncMultiCamProducer& producer,
+    std::atomic<bool>& running,
+    const std::string& output_prefix,
+    double fps)
+{
+    std::uint64_t last_seq = 0;
+    std::vector<cv::VideoWriter> writers;
+    std::vector<unsigned char> writer_failed;
+
+    while (running)
+    {
+        auto wait_result = producer.waitForNewer(last_seq, 100);
+
+        if (wait_result.status == WaitForNewerStatus::Stopped)
+            break;
+
+        if (wait_result.status == WaitForNewerStatus::Timeout)
+            continue;
+
+        auto bundle = wait_result.bundle;
+
+        if (!bundle)
+            continue;
+
+        last_seq = bundle->sequence_id;
+
+        if (writers.size() != bundle->cameras.size())
+        {
+            writers.clear();
+            writers.resize(bundle->cameras.size());
+            writer_failed.assign(bundle->cameras.size(), 0);
+        }
+
+        for (std::size_t i = 0; i < bundle->cameras.size(); ++i)
+        {
+            auto ir = bundle->cameras[i].frames.get_infrared_frame(1);
+            if (!ir)
+                continue;
+
+            cv::Mat ir_img = irFrameToMatClone(ir);
+
+            if (!writers[i].isOpened() && !writer_failed[i])
+            {
+                const std::string filename =
+                    output_prefix + "_camera_" + std::to_string(i) + ".avi";
+
+                writers[i].open(
+                    filename,
+                    cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
+                    fps,
+                    ir_img.size(),
+                    false
+                );
+
+                if (!writers[i].isOpened())
+                {
+                    writer_failed[i] = 1;
+                    std::cerr << "[Recorder] failed to open "
+                              << filename
+                              << std::endl;
+                    continue;
+                }
+
+                std::cout << "[Recorder] writing "
+                          << filename
+                          << std::endl;
+            }
+
+            if (writers[i].isOpened())
+                writers[i].write(ir_img);
+        }
+    }
+
+    for (auto& writer : writers)
+    {
+        if (writer.isOpened())
+            writer.release();
     }
 }
