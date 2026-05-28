@@ -25,6 +25,19 @@ struct MultiCamFrameBundle
     std::vector<CameraFrame> cameras;
 };
 
+enum class WaitForNewerStatus
+{
+    NewFrame,
+    Timeout,
+    Stopped
+};
+
+struct WaitForNewerResult
+{
+    WaitForNewerStatus status = WaitForNewerStatus::Timeout;
+    std::shared_ptr<const MultiCamFrameBundle> bundle;
+};
+
 class AsyncMultiCamProducer
 {
 public:
@@ -39,7 +52,7 @@ public:
 
     std::shared_ptr<const MultiCamFrameBundle> getLatest() const;
 
-    std::shared_ptr<const MultiCamFrameBundle> waitForNewer(
+    WaitForNewerResult waitForNewer(
         std::uint64_t last_sequence_id,
         int timeout_ms = 100
     );

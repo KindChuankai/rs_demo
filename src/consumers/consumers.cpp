@@ -23,7 +23,15 @@ void policyConsumer(
 
     while (running)
     {
-        auto bundle = producer.waitForNewer(last_seq, 100);
+        auto wait_result = producer.waitForNewer(last_seq, 100);
+
+        if (wait_result.status == WaitForNewerStatus::Stopped)
+            break;
+
+        if (wait_result.status == WaitForNewerStatus::Timeout)
+            continue;
+
+        auto bundle = wait_result.bundle;
 
         if (!bundle)
             continue;
@@ -67,7 +75,15 @@ void visualizationConsumer(
 
     while (running)
     {
-        auto bundle = producer.waitForNewer(last_seq, 100);
+        auto wait_result = producer.waitForNewer(last_seq, 100);
+
+        if (wait_result.status == WaitForNewerStatus::Stopped)
+            break;
+
+        if (wait_result.status == WaitForNewerStatus::Timeout)
+            continue;
+
+        auto bundle = wait_result.bundle;
 
         if (!bundle)
             continue;

@@ -1,5 +1,6 @@
 #include "rs_demo/async_multi_cam/async_multi_cam.hpp"
 
+#include <chrono>
 #include <iostream>
 
 struct AsyncMultiCamProducer::CameraSlot
@@ -78,6 +79,7 @@ void AsyncMultiCamProducer::stop()
         return;
 
     running_ = false;
+    bundle_cv_.notify_all();
 
     for (auto& cam : cameras_)
     {
@@ -96,7 +98,6 @@ void AsyncMultiCamProducer::stop()
         }
     }
 
-    bundle_cv_.notify_all();
 }
 
 std::shared_ptr<const MultiCamFrameBundle>
@@ -106,7 +107,7 @@ AsyncMultiCamProducer::getLatest() const
     return latest_bundle_;
 }
 
-std::shared_ptr<const MultiCamFrameBundle>
+WaitForNewerResult
 AsyncMultiCamProducer::waitForNewer(
     std::uint64_t last_sequence_id,
     int timeout_ms)
@@ -126,22 +127,15 @@ AsyncMultiCamProducer::waitForNewer(
     );
 
     if (!running_)
-        return nullptr;
+        return {WaitForNewerStatus::Stopped, nullptr};
 
     if (!latest_bundle_)
-        return nullptr;
+        return {WaitForNewerStatus::Timeout, nullptr};
 
     if (latest_bundle_->sequence_id <= last_sequence_id)
-        return nullptr;
+        return {WaitForNewerStatus::Timeout, nullptr};
 
-    // if (!running_ &&
-    // (!latest_bundle_ ||
-    // latest_bundle_->sequence_id <= last_sequence_id))
-    // {
-    //     return nullptr;
-    // }
-
-    return latest_bundle_;
+    return {WaitForNewerStatus::NewFrame, latest_bundle_};
 }
 
 void AsyncMultiCamProducer::onFrame(
